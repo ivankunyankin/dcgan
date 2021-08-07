@@ -114,9 +114,9 @@ def main():
                 step += 1
 
     print("=> Saving checkpoints")
-    torch.save(disc.module.state_dict(), os.path.join(CHECKPOINT_PATH, f"disc_model.pt"))
+    torch.save(disc.state_dict(), os.path.join(CHECKPOINT_PATH, f"disc_model.pt"))
     torch.save(opt_disc.state_dict(), os.path.join(CHECKPOINT_PATH, f"disc_optim.pt"))
-    torch.save(gen.module.state_dict(), os.path.join(CHECKPOINT_PATH, f"gen_model.pt"))
+    torch.save(gen.state_dict(), os.path.join(CHECKPOINT_PATH, f"gen_model.pt"))
     torch.save(opt_gen.state_dict(), os.path.join(CHECKPOINT_PATH, f"gen_optim.pt"))
 
 
