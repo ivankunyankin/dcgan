@@ -13,16 +13,19 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from model import Discriminator, Generator, initialize_weights
 
+from utils import save_checkpoint
+
 # Hyperparameters etc.
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 LEARNING_RATE = 2e-4  # could also use two lrs, one for gen and one for disc
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 IMAGE_SIZE = 64
-CHANNELS_IMG = 1
+CHANNELS_IMG = 3
 NOISE_DIM = 100
 NUM_EPOCHS = 5
 FEATURES_DISC = 64
 FEATURES_GEN = 64
+CHECKPOINT_PATH = "/content/drive/MyDrive/DCGAN/checkpoint"
 
 transforms = transforms.Compose(
     [
@@ -34,13 +37,9 @@ transforms = transforms.Compose(
     ]
 )
 
-# If you train on MNIST, remember to set channels_img to 1
-dataset = datasets.MNIST(root="dataset/", train=True, transform=transforms,
-                         download=True)
-
-# comment mnist above and uncomment below if train on CelebA
-#dataset = datasets.ImageFolder(root="celeb_dataset", transform=transforms)
+dataset = datasets.ImageFolder(root="cropped", transform=transforms)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+
 gen = Generator(NOISE_DIM, CHANNELS_IMG, FEATURES_GEN).to(device)
 disc = Discriminator(CHANNELS_IMG, FEATURES_DISC).to(device)
 initialize_weights(gen)
@@ -61,6 +60,9 @@ disc.train()
 for epoch in range(NUM_EPOCHS):
     # Target labels not needed! <3 unsupervised
     for batch_idx, (real, _) in enumerate(dataloader):
+
+        if batch_idx % 100 == 0:
+            print(f"..processing {batch_idx}th batch")
         real = real.to(device)
         noise = torch.randn(BATCH_SIZE, NOISE_DIM, 1, 1).to(device)
         fake = gen(noise)
@@ -103,3 +105,5 @@ for epoch in range(NUM_EPOCHS):
                 writer_fake.add_image("Fake", img_grid_fake, global_step=step)
 
             step += 1
+
+save_checkpoint(CHECKPOINT_PATH)
