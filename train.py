@@ -64,7 +64,7 @@ def main(config):
             loss_gen.backward()
             opt_gen.step()
 
-            loop.set_postfix(loss_gen=loss_gen.item(), disc_gen=loss_disc.item())
+            loop.set_postfix(loss_gen=loss_gen.item(), loss_disc=loss_disc.item())
 
             # Print losses occasionally and print to tensorboard
             if batch_idx % 100 == 0:
