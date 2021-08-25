@@ -18,7 +18,8 @@ class SimpsonsDataset(Dataset):
             ])
         self.collection = []
         for filename in os.listdir(data_dir):
-            self.collection.append(os.path.join(data_dir, filename))
+            if filename.endswith((".png", ".jpg", ".jpeg")):
+                self.collection.append(os.path.join(data_dir, filename))
 
     def __len__(self):
         return len(self.collection)
