@@ -82,6 +82,7 @@ def initialize_weights(model):
         if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d, nn.BatchNorm2d)):
             nn.init.normal_(m.weight.data, 0.0, 0.02)
 
+
 def test():
     N, in_channels, H, W = 8, 3, 64, 64
     noise_dim = 100

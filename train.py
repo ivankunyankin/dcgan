@@ -1,77 +1,50 @@
-"""
-Training of DCGAN network on MNIST dataset with Discriminator
-and Generator imported from models.py
-"""
 import os
+import yaml
 import torch
+from tqdm import tqdm
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
-import torchvision.datasets as datasets
-import torchvision.transforms as transforms
+from IPython.display import clear_output
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from argparse import ArgumentParser
+
 from model import Discriminator, Generator, initialize_weights
+from utils import load_checkpoint, save_checkpoints, SimpsonsDataset
 
 
-def main():
+def main(config):
 
     # Hyperparameters etc.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    LEARNING_RATE = 2e-4  # could also use two lrs, one for gen and one for disc
-    BATCH_SIZE = 64
-    IMAGE_SIZE = 64
-    CHANNELS_IMG = 3
-    NOISE_DIM = 100
-    NUM_EPOCHS = 5
-    FEATURES_DISC = 64
-    FEATURES_GEN = 64
-    CHECKPOINT_PATH = "/content/drive/MyDrive/DCGAN/checkpoint"
-    FROM_CHECKPOINT = True
 
-    transform = transforms.Compose(
-        [
-            transforms.Resize(IMAGE_SIZE),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                [0.5 for _ in range(CHANNELS_IMG)], [0.5 for _ in range(CHANNELS_IMG)]
-            ),
-        ]
-    )
+    dataset = SimpsonsDataset(config["DATA_DIR"], config["IMAGE_SIZE"], config["NUM_CHANNELS"])
+    dataloader = DataLoader(dataset, batch_size=config["BATCH_SIZE"], shuffle=True)
 
-    dataset = datasets.ImageFolder(root="cropped", transform=transform)
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
-
-    gen = Generator(NOISE_DIM, CHANNELS_IMG, FEATURES_GEN).to(device)
-    disc = Discriminator(CHANNELS_IMG, FEATURES_DISC).to(device)
+    gen = Generator(config["NOISE_DIM"], config["NUM_CHANNELS"], config["FEATURES_GEN"]).to(device)
+    disc = Discriminator(config["NUM_CHANNELS"], config["FEATURES_DISC"]).to(device)
     initialize_weights(gen)
     initialize_weights(disc)
 
-    opt_gen = optim.Adam(gen.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
-    opt_disc = optim.Adam(disc.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
+    opt_gen = optim.Adam(gen.parameters(), lr=float(config["LEARNING_RATE"]), betas=(0.5, 0.999))
+    opt_disc = optim.Adam(disc.parameters(), lr=float(config["LEARNING_RATE"]), betas=(0.5, 0.999))
     criterion = nn.BCELoss()
 
-    if FROM_CHECKPOINT:
-        disc.load_state_dict(torch.load(os.path.join(CHECKPOINT_PATH, "disc_model.pt"), map_location=device))
-        opt_disc.load_state_dict(torch.load(os.path.join(CHECKPOINT_PATH, "disc_optim.pt"), map_location=device))
-        gen.load_state_dict(torch.load(os.path.join(CHECKPOINT_PATH, "gen_model.pt"), map_location=device))
-        opt_gen.load_state_dict(torch.load(os.path.join(CHECKPOINT_PATH, "gen_optim.pt"), map_location=device))
-        print("=> Checkpoints loaded!")
+    if config["FROM_CHECKPOINT"]:
+        gen, disc, opt_gen, opt_disc = load_checkpoint(gen, disc, opt_gen, opt_disc, config["CHECKPOINT_PATH"], device)
 
-    fixed_noise = torch.randn(32, NOISE_DIM, 1, 1).to(device)
-    writer_real = SummaryWriter(f"logs/real")
-    writer_fake = SummaryWriter(f"logs/fake")
-    step = 0
+    fixed_noise = torch.randn(32, config["NOISE_DIM"], 1, 1).to(device)
+    writer_real = SummaryWriter(os.path.join(config["LOG_PATH"], "real"))
+    writer_fake = SummaryWriter(os.path.join(config["LOG_PATH"], "fake"))
 
-    gen.train()
-    disc.train()
-
-    for epoch in range(NUM_EPOCHS):
-        # Target labels not needed! <3 unsupervised
-        for batch_idx, (real, _) in enumerate(dataloader):
+    for epoch in range(1, config["NUM_EPOCHS"]+1):
+        loop = tqdm(dataloader)
+        for batch_idx, real in enumerate(loop):
+            loop.set_description(f"Epoch {epoch}")
 
             real = real.to(device)
-            noise = torch.randn(BATCH_SIZE, NOISE_DIM, 1, 1).to(device)
+            noise = torch.randn(config["BATCH_SIZE"], config["NOISE_DIM"], 1, 1).to(device)
             fake = gen(noise)
 
             ### Train Discriminator: max log(D(x)) + log(1 - D(G(z)))
@@ -91,34 +64,23 @@ def main():
             loss_gen.backward()
             opt_gen.step()
 
+            loop.set_postfix(loss_gen=loss_gen.item(), disc_gen=loss_disc.item())
+
             # Print losses occasionally and print to tensorboard
             if batch_idx % 100 == 0:
-                print(
-                    f"Epoch [{epoch}/{NUM_EPOCHS}] Batch {batch_idx}/{len(dataloader)} \
-                      Loss D: {loss_disc:.4f}, loss G: {loss_gen:.4f}"
-                )
-
                 with torch.no_grad():
                     fake = gen(fixed_noise)
-                    # take out (up to) 32 examples
-                    img_grid_real = torchvision.utils.make_grid(
-                        real[:32], normalize=True
-                    )
-                    img_grid_fake = torchvision.utils.make_grid(
-                        fake[:32], normalize=True
-                    )
-
-                    writer_real.add_image("Real", img_grid_real, global_step=step)
-                    writer_fake.add_image("Fake", img_grid_fake, global_step=step)
-
-                step += 1
-
+                    img_grid_real = torchvision.utils.make_grid(real[:32], normalize=True)
+                    img_grid_fake = torchvision.utils.make_grid(fake[:32], normalize=True)
+                    writer_real.add_image(f"Real_epoch_{epoch}", img_grid_real, global_step=batch_idx)
+                    writer_fake.add_image(f"Fake_epoch_{epoch}", img_grid_fake, global_step=batch_idx)
     print("=> Saving checkpoints")
-    torch.save(disc.state_dict(), os.path.join(CHECKPOINT_PATH, f"disc_model.pt"))
-    torch.save(opt_disc.state_dict(), os.path.join(CHECKPOINT_PATH, f"disc_optim.pt"))
-    torch.save(gen.state_dict(), os.path.join(CHECKPOINT_PATH, f"gen_model.pt"))
-    torch.save(opt_gen.state_dict(), os.path.join(CHECKPOINT_PATH, f"gen_optim.pt"))
+    save_checkpoints(gen, disc, opt_gen, opt_disc, config["CHECKPOINT_PATH"])
 
 
 if __name__ == "__main__":
-    main()
+    parser = ArgumentParser()
+    parser.add_argument("--config", default="config.yml", help="Configuration file path")
+    args = parser.parse_args()
+    config = yaml.safe_load(open(args.config))
+    main(config)
