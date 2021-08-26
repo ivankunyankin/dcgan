@@ -1,7 +1,3 @@
-"""
-Discriminator and Generator implementation from DCGAN paper
-"""
-
 import torch
 import torch.nn as nn
 
@@ -26,15 +22,8 @@ class Discriminator(nn.Module):
 
     def _block(self, in_channels, out_channels, kernel_size, stride, padding):
         return nn.Sequential(
-            nn.Conv2d(
-                in_channels,
-                out_channels,
-                kernel_size,
-                stride,
-                padding,
-                bias=False,
-            ),
-            #nn.BatchNorm2d(out_channels),
+            nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias=False),
+            nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(0.2),
         )
 
@@ -43,37 +32,47 @@ class Discriminator(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, channels_noise, channels_img, features_g):
+    def __init__(self, channels_noise, channels_img, features_g, upsample=False):
         super(Generator, self).__init__()
+        self.upsample = upsample
         self.net = nn.Sequential(
             # Input: N x channels_noise x 1 x 1
-            self._block(channels_noise, features_g * 16, 4, 1, 0),  # img: 4x4
-            self._block(features_g * 16, features_g * 8, 4, 2, 1),  # img: 8x8
-            self._block(features_g * 8, features_g * 4, 4, 2, 1),  # img: 16x16
-            self._block(features_g * 4, features_g * 2, 4, 2, 1),  # img: 32x32
-            nn.ConvTranspose2d(
-                features_g * 2, channels_img, kernel_size=4, stride=2, padding=1
-            ),
+            self._block(channels_noise, features_g * 16, 4, 1, 0, self.upsample),  # img: 4x4
+            self._block(features_g * 16, features_g * 8, 4, 2, 1, self.upsample),  # img: 8x8
+            self._block(features_g * 8, features_g * 4, 4, 2, 1, self.upsample),  # img: 16x16
+            self._block(features_g * 4, features_g * 2, 4, 2, 1, self.upsample),  # img: 32x32
+            nn.ConvTranspose2d(features_g * 2, channels_img, kernel_size=4, stride=2, padding=1),
             # Output: N x channels_img x 64 x 64
             nn.Tanh(),
         )
+        if self.upsample:
+            self.last_conv = nn.Conv2d(features_g * 2, channels_img, 3, 1, 1)
 
-    def _block(self, in_channels, out_channels, kernel_size, stride, padding):
-        return nn.Sequential(
-            nn.ConvTranspose2d(
-                in_channels,
-                out_channels,
-                kernel_size,
-                stride,
-                padding,
-                bias=False,
-            ),
-            #nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
-        )
+    def _block(self, in_channels, out_channels, kernel_size, stride, padding, upsample):
+        if upsample:
+            return nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, 3, 1, 1, bias=False),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(),
+            )
+        else:
+            return nn.Sequential(
+                nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding, bias=False),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(),
+            )
 
     def forward(self, x):
-        return self.net(x)
+        if self.upsample:
+            for idx, layer in enumerate(self.net[:4]):
+                x = torch.nn.functional.interpolate(x, size=(4 * (idx + 1), 4 * (idx + 1)), mode='nearest')
+                x = layer(x)
+            x = torch.nn.functional.interpolate(x, size=(64, 64), mode='nearest')
+            x = self.last_conv(x)
+            x = self.net[-1](x)  # Tanh
+            return x
+        else:
+            return self.net(x)
 
 
 def initialize_weights(model):
@@ -89,7 +88,7 @@ def test():
     x = torch.randn((N, in_channels, H, W))
     disc = Discriminator(in_channels, 8)
     assert disc(x).shape == (N, 1, 1, 1), "Discriminator test failed"
-    gen = Generator(noise_dim, in_channels, 8)
+    gen = Generator(noise_dim, in_channels, 8, upsample=True)
     z = torch.randn((N, noise_dim, 1, 1))
     assert gen(z).shape == (N, in_channels, H, W), "Generator test failed"
 

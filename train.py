@@ -14,7 +14,7 @@ from model import Discriminator, Generator, initialize_weights
 from utils import load_checkpoint, save_checkpoints, SimpsonsDataset
 
 
-def main(config):
+def main(config, upsample):
 
     # Hyperparameters etc.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,7 +22,7 @@ def main(config):
     dataset = SimpsonsDataset(config["DATA_DIR"], config["IMAGE_SIZE"], config["NUM_CHANNELS"])
     dataloader = DataLoader(dataset, batch_size=config["BATCH_SIZE"], shuffle=True)
 
-    gen = Generator(config["NOISE_DIM"], config["NUM_CHANNELS"], config["FEATURES_GEN"]).to(device)
+    gen = Generator(config["NOISE_DIM"], config["NUM_CHANNELS"], config["FEATURES_GEN"], upsample=upsample).to(device)
     disc = Discriminator(config["NUM_CHANNELS"], config["FEATURES_DISC"]).to(device)
     initialize_weights(gen)
     initialize_weights(disc)
@@ -81,6 +81,8 @@ def main(config):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--config", default="config.yml", help="Configuration file path")
+    parser.add_argument("--upsample", action="store_true", help="Whether to use upsampling + conv instead of deconv")
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config))
-    main(config)
+    upsample = args.upsample
+    main(config, upsample)
