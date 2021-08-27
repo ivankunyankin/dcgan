@@ -67,13 +67,14 @@ def main(config, upsample):
             loop.set_postfix(loss_gen=loss_gen.item(), loss_disc=loss_disc.item())
 
             # Print losses occasionally and print to tensorboard
-            if batch_idx % 100 == 0:
+            if batch_idx == len(dataloader) - 1:
                 with torch.no_grad():
                     fake = gen(fixed_noise)
                     img_grid_real = torchvision.utils.make_grid(real[:32], normalize=True)
                     img_grid_fake = torchvision.utils.make_grid(fake[:32], normalize=True)
-                    writer_real.add_image(f"Real_epoch_{epoch}", img_grid_real, global_step=batch_idx)
-                    writer_fake.add_image(f"Fake_epoch_{epoch}", img_grid_fake, global_step=batch_idx)
+                    writer_real.add_image("Real", img_grid_real, global_step=epoch)
+                    writer_fake.add_image("Fake", img_grid_fake, global_step=epoch)
+
     print("=> Saving checkpoints")
     save_checkpoints(gen, disc, opt_gen, opt_disc, config["CHECKPOINT_PATH"])
 
