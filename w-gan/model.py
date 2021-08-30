@@ -63,13 +63,13 @@ class Generator(nn.Module):
 
     def forward(self, x):
         if self.upsample:
-            size = 4
-            for idx, layer in enumerate(self.net[:4]):
+            x = self.net[0](x)
+            size = 8
+            for idx, layer in enumerate(self.net[1:4]):
                 x = torch.nn.functional.interpolate(x, size=(size, size), mode='nearest')
                 x = layer(x)
                 size *= 2
-            x = torch.nn.functional.interpolate(x, size=(64, 64), mode='nearest')
-            x = self.last_conv(x)
+            x = self.net[-2](x)
             x = self.net[-1](x)  # Tanh
             return x
         else:
