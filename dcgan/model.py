@@ -37,7 +37,7 @@ class Generator(nn.Module):
         self.upsample = upsample
         self.net = nn.Sequential(
             # Input: N x channels_noise x 1 x 1
-            self._block(channels_noise, features_g * 16, 4, 1, 0, self.upsample),  # img: 4x4
+            self._block(channels_noise, features_g * 16, 4, 1, 0, upsample=False),  # img: 4x4
             self._block(features_g * 16, features_g * 8, 4, 2, 1, self.upsample),  # img: 8x8
             self._block(features_g * 8, features_g * 4, 4, 2, 1, self.upsample),  # img: 16x16
             self._block(features_g * 4, features_g * 2, 4, 2, 1, self.upsample),  # img: 32x32
@@ -64,13 +64,13 @@ class Generator(nn.Module):
 
     def forward(self, x):
         if self.upsample:
-            size = 4
-            for idx, layer in enumerate(self.net[:4]):
+            x = self.net[0](x)
+            size = 8
+            for idx, layer in enumerate(self.net[1:4]):
                 x = torch.nn.functional.interpolate(x, size=(size, size), mode='nearest')
                 x = layer(x)
                 size *= 2
-            x = torch.nn.functional.interpolate(x, size=(64, 64), mode='nearest')
-            x = self.last_conv(x)
+            x = self.net[-2](x)
             x = self.net[-1](x)  # Tanh
             return x
         else:
