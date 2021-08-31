@@ -62,7 +62,7 @@ def main(config, upsample):
             loss_gen.backward()
             opt_gen.step()
 
-            loop.set_postfix(loss_gen=loss_gen.item(), loss_crit=critic_loss.item())
+            loop.set_postfix(loss_gen=loss_gen.item(), loss_crit=loss_crit.item())
 
             # Print losses occasionally and print to tensorboard
             if batch_idx == len(dataloader) - 1:
