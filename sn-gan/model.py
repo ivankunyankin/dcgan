@@ -34,7 +34,7 @@ class Generator(nn.Module):
         self.upsample = upsample
         self.net = nn.Sequential(
             # Input: N x channels_noise x 1 x 1
-            self._block(channels_noise, features_g * 16, 4, 1, 0, self.upsample),  # img: 4x4
+            self._block(channels_noise, features_g * 16, 4, 1, 0, upsample=False),  # img: 4x4
             self._block(features_g * 16, features_g * 8, 4, 2, 1, self.upsample),  # img: 8x8
             self._block(features_g * 8, features_g * 4, 4, 2, 1, self.upsample),  # img: 16x16
             self._block(features_g * 4, features_g * 2, 4, 2, 1, self.upsample),  # img: 32x32
