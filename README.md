@@ -13,7 +13,7 @@ Every model was trained for 50 epochs using [Simpson Faces](https://www.kaggle.c
 !Experiments were not meant to demonstrate the best looking generated images. Rather effects of different training stabilization technique. Feel free to play around with model architectures/hyperparameters/number of epochs to achieve better results.
 
 <p float="center">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/real.png">
+  <img width="60%" src="https://github.com/ivankunyankin/gan/blob/master/assets/real.png">
 </p>
 <div align="center"><i><small>Real image examples</small></i></div>
 
@@ -63,33 +63,42 @@ tensorboard --logdir logs/
 
 1. BCE-Loss:
 
-<div align="center"><i><small>Deconv no BN, Deconv + BN, Upsample no BN, Upsample + BN</small></i></div>
+<div align="center"><i><small>Deconv no BN, Deconv + BN</small></i></div>
 
 <p float="left">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/bce_deconv_no_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/bce_deconv_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/bce_upsample_no_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/bce_upsample_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/bce_deconv_no_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/bce_deconv_batchnorm.png">
 </p>
+<p>
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/bce_upsample_no_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/bce_upsample_batchnorm.png">
+</p>
+<div align="center"><i><small>Upsample no BN, Upsample + BN</small></i></div>
 
 2. W-Loss + GP:
 
-<div align="center"><i><small>Deconv no BN, Deconv + BN, Upsample no BN, Upsample + BN</small></i></div>
+<div align="center"><i><small>Deconv no BN, Deconv + BN</small></i></div>
 
 <p float="left">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_gp_deconv_no_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_gp_deconv_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_gp_upsample_no_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_gp_upsample_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_gp_deconv_no_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_gp_deconv_batchnorm.png">
 </p>
+<p>
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_gp_upsample_no_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_gp_upsample_batchnorm.png">
+</p>
+<div align="center"><i><small>Upsample no BN, Upsample + BN</small></i></div>
 
 3. W-Loss + SN:
 
-<div align="center"><i><small>Deconv no BN, Deconv + BN, Upsample no BN, Upsample + BN</small></i></div>
+<div align="center"><i><small>Deconv no BN, Deconv + BN</small></i></div>
 
 <p float="left">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_sn_deconv_no_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_sn_deconv_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_sn_upsample_no_batchnorm.png">
-  <img width="32%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_sn_upsample_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_sn_deconv_no_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_sn_deconv_batchnorm.png">
 </p>
+<p>
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_sn_upsample_no_batchnorm.png">
+  <img width="45%" src="https://github.com/ivankunyankin/gan/blob/master/assets/wloss_sn_upsample_batchnorm.png">
+</p>
+<div align="center"><i><small>Upsample no BN, Upsample + BN</small></i></div>
